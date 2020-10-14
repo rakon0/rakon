@@ -205,6 +205,17 @@ Var = true
 end
 return Var
 end
+function AddChannelDEV(BGBBB)
+local var = true
+if redis:get(bot_id..'add:ch:id') then
+local url , res = https.request("https://api.telegram.org/bot"..token.."/getchatmember?chat_id="..redis:get(bot_id..'add:ch:id').."&user_id="..BGBBB);
+data = json:decode(url)
+if res ~= 200 or data.result.status == "left" or data.result.status == "kicked" then
+var = false
+end
+end
+return var
+end
 ------------------------------------------------------------------------------------------------------------
 function Rank_Checking(user_id,chat_id)
 if Dev_rakon_User(user_id) then
@@ -1523,6 +1534,95 @@ redis:del(bot_id.."Broadcasting:Users" .. msg.chat_id_ .. ":" .. msg.sender_user
 return false
 end
 ------------------------------------------------------------------------------------------------------------
+if text and text:match("^- تغير الاشتراك 🎚$") and Dev_rakon(msg) then  
+redis:setex(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
+send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي معرف القناة')
+return false  
+end
+if text and text:match("- تغير رساله الاشتراك ⚙$") and Dev_rakon(msg) then  
+redis:setex(bot_id.."textch:user" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
+send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي النص الذي تريده')
+return false  
+end
+if text == "حذف رساله الاشتراك 🗑" and Dev_rakon(msg) then  
+redis:del(bot_id..'text:ch:user')
+send(msg.chat_id_, msg.id_, "⌔︙تم مسح رساله الاشتراك ")
+return false  
+end
+if text and text:match("^- تعين قناة الاشتراك 📜$") and Dev_rakon(msg) then  
+redis:setex(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
+send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي معرف القناة')
+return false  
+end
+if text == "تفعيل الاشتراك الاجباري ✅" and Dev_rakon(msg) then  
+if redis:get(bot_id..'add:ch:id') then
+local addchusername = redis:get(bot_id..'add:ch:username')
+send(msg.chat_id_, msg.id_,"⌔︙الاشتراك الاجباري مفعل \n⌔︙على القناة » ["..addchusername.."]")
+else
+redis:setex(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
+send(msg.chat_id_, msg.id_,"⌔︙اهلا عزيزي المطور \n⌔︙ارسل الان معرف قناتك")
+end
+return false  
+end
+if text == "تعطيل الاشتراك الاجباري ❌" and Dev_rakon(msg) then  
+redis:del(bot_id..'add:ch:id')
+redis:del(bot_id..'add:ch:username')
+send(msg.chat_id_, msg.id_, "⌔︙تم تعطيل الاشتراك الاجباري ")
+return false  
+end
+if text == "الاشتراك الاجباري ⭕️" and Dev_rakon(msg) then  
+if redis:get(bot_id..'add:ch:username') then
+local addchusername = redis:get(bot_id..'add:ch:username')
+send(msg.chat_id_, msg.id_, "⌔︙تم تفعيل الاشتراك الاجباري \n⌔︙على القناة » ["..addchusername.."]")
+else
+send(msg.chat_id_, msg.id_, "⌔︙لا يوجد قناة في الاشتراك الاجباري ")
+end
+return false  
+end
+if redis:get(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_) then 
+if text and text:match("^الغاء$") then 
+send(msg.chat_id_, msg.id_, "⌔︙تم الغاء الامر ")
+redis:del(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_)  
+return false 
+end 
+redis:del(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_)  
+local username = string.match(text, "@[%a%d_]+") 
+tdcli_function ({    
+ID = "SearchPublicChat",    
+username_ = username  
+},function(arg,data) 
+if data and data.message_ and data.message_ == "USERNAME_NOT_OCCUPIED" then 
+send(msg.chat_id_, msg.id_, '⌔︙المعرف لا يوجد فيه قناة')
+return false  end
+if data and data.type_ and data.type_.ID and data.type_.ID == 'PrivateChatInfo' then
+send(msg.chat_id_, msg.id_, '⌔︙عذا لا يمكنك وضع معرف حسابات في الاشتراك ')
+return false  end
+if data and data.type_ and data.type_.channel_ and data.type_.channel_.is_supergroup_ == true then
+send(msg.chat_id_, msg.id_,'⌔︙عذا لا يمكنك وضع معرف مجموعه بالاشتراك ')
+return false  end
+if data and data.type_ and data.type_.channel_ and data.type_.channel_.is_supergroup_ == false then
+if data and data.type_ and data.type_.channel_ and data.type_.channel_.ID and data.type_.channel_.status_.ID == 'ChatMemberStatusEditor' then
+send(msg.chat_id_, msg.id_,'⌔︙البوت ادمن في القناة \n⌔︙تم تفعيل الاشتراك الاجباري في \n⌔︙ايدي القناة ('..data.id_..')\n⌔︙معرف القناة ([@'..data.type_.channel_.username_..'])')
+redis:set(bot_id..'add:ch:id',data.id_)
+redis:set(bot_id..'add:ch:username','@'..data.type_.channel_.username_)
+else
+send(msg.chat_id_, msg.id_,'⌔︙عذرآ البوت ليس ادمن بالقناه ')
+end
+return false  
+end
+end,nil)
+end
+if redis:get(bot_id.."textch:user" .. msg.chat_id_ .. "" .. msg.sender_user_id_) then 
+if text and text:match("^الغاء$") then 
+send(msg.chat_id_, msg.id_, "⌔︙تم الغاء الامر ")
+redis:del(bot_id.."textch:user" .. msg.chat_id_ .. "" .. msg.sender_user_id_)  
+return false  end 
+redis:del(bot_id.."textch:user" .. msg.chat_id_ .. "" .. msg.sender_user_id_)  
+local texxt = string.match(text, "(.*)") 
+redis:set(bot_id..'text:ch:user',texxt)
+send(msg.chat_id_, msg.id_,'⌔︙تم تغيير رسالة الاشتراك ')
+end
+------------------------------------------------------------------------------------------------------------
 if redis:get(bot_id.."Broadcasting:Groups" .. msg.chat_id_ .. ":" .. msg.sender_user_id_) then 
 if text == "الغاء" or text == "الغاء ✖" then   
 send(msg.chat_id_,msg.id_, "\n⌔︙تم الغاء الاذاعه للمجموعات") 
@@ -2282,7 +2382,12 @@ end
 if TypeForChat == ("ForUser") then
 if text == '/start' then  
 if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+local textchuser = database:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'👥| لا تستطيع استخدام البوت يرجى الاشتراك في القناة حتى تتمكن من استخدام الاوامر \n 📌| اشترك هنا ['..database:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if Dev_rakon(msg) then
@@ -2300,6 +2405,10 @@ local List_keyboard = {
 {'مسح قائمه العام 💯','مسح قائمه المطورين 🚫'},
 {'ازالة كليشه ستارت 🔗','تغير كليشه ستارت 🆕'},
 {'قائمه العام 📝','قائمه المطورين 📝'},
+{'الاشتراك الاجباري ⭕️','- تغير الاشتراك 🎚'},
+{'تفعيل الاشتراك الاجباري ✅','تعطيل الاشتراك الاجباري ❌'},
+{'- تعين قناة الاشتراك 📜'},
+{'حذف رساله الاشتراك 🗑','- تغير رساله الاشتراك ⚙'},
 {'تغير اسم البوت 🔄'},
 {'تغير كليشة المطور 🆕','ازالة كليشة المطور 🆗'},
 {'تحديث الملفات 🔁','تحديث السورس 🔂'},
@@ -3274,8 +3383,13 @@ end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 
 elseif text == ("رفع منشئ اساسي") and tonumber(msg.reply_to_message_id_) ~= 0 and DeveloperBot(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3284,8 +3398,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم ترقيته منش�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("تنزيل منشئ اساسي") and tonumber(msg.reply_to_message_id_) ~= 0 and DeveloperBot(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3294,8 +3413,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تنزيله من ا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("رفع منشئ اساسي") and tonumber(msg.reply_to_message_id_) ~= 0 then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 tdcli_function ({ID = "GetChatMember",chat_id_ = msg.chat_id_,user_id_ = msg.sender_user_id_},function(arg,da) 
@@ -3310,8 +3434,13 @@ end,nil)
 elseif text == ("تنزيل منشئ اساسي") and tonumber(msg.reply_to_message_id_) ~= 0 then 
 tdcli_function ({ID = "GetChatMember",chat_id_ = msg.chat_id_,user_id_ = msg.sender_user_id_},function(arg,da) 
 if da.status_.ID == "ChatMemberStatusCreator" then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3322,8 +3451,13 @@ tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumbe
 end
 end,nil)
 elseif text == "رفع منشئ" and tonumber(msg.reply_to_message_id_) ~= 0 and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3332,8 +3466,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم ترقيته منش�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل منشئ$") and tonumber(msg.reply_to_message_id_) ~= 0 and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3342,8 +3481,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تنزيله من ا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("رفع مدير") and tonumber(msg.reply_to_message_id_) ~= 0 and Constructor(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3352,8 +3496,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم ترقيته مدي�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("تنزيل مدير") and tonumber(msg.reply_to_message_id_) ~= 0 and Constructor(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3362,8 +3511,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تنزيله من ا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("رفع ادمن") and tonumber(msg.reply_to_message_id_) ~= 0 and Owner(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Cheking:Seted"..msg.chat_id_) then 
@@ -3376,8 +3530,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم ترقيته ادم�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("تنزيل ادمن") and tonumber(msg.reply_to_message_id_) ~= 0 and Owner(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3386,8 +3545,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تنزيله من ا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("رفع مميز") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Cheking:Seted"..msg.chat_id_) then 
@@ -3400,8 +3564,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم ترقيته ممي�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("تنزيل مميز") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3410,8 +3579,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تنزيله من ا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("حظر") and msg.reply_to_message_id_ ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Lock:Ban:Group"..msg.chat_id_) then 
@@ -3439,8 +3613,13 @@ end
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("الغاء حظر") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3454,8 +3633,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم الغاء حظره 
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("كتم") and msg.reply_to_message_id_ ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if msg.can_be_deleted_ == false then 
@@ -3472,8 +3656,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم كتمه من هنا
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("الغاء كتم") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3482,8 +3671,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم الغاء كتمه 
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("الغاء تقيد") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3497,8 +3691,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم الغاء تقيي�
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text == ("تقيد") and tonumber(msg.reply_to_message_id_) ~= 0 and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3516,8 +3715,13 @@ Send_Options(msg,result.sender_user_id_,"reply","⌔︙تم تقييده")
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, FunctionStatus, nil)
 elseif text and text:match("^حظر عام @(.*)$") and Dev_rakon(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3542,8 +3746,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^حظر عام @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^الغاء العام @(.*)$") and Dev_rakon(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3557,8 +3766,13 @@ end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^الغاء العام @(.*)$") }, FunctionStatus, nil)
 
 elseif text and text:match("^رفع منشئ اساسي @(.*)$") and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3575,8 +3789,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^رفع منشئ اساسي @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل منشئ اساسي @(.*)$") and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3591,8 +3810,13 @@ tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^تنزيل م�
 elseif text and text:match("^رفع منشئ اساسي @(.*)$") then 
 tdcli_function ({ID = "GetChatMember",chat_id_ = msg.chat_id_,user_id_ = msg.sender_user_id_},function(arg,da) 
 if da.status_.ID == "ChatMemberStatusCreator" then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3614,8 +3838,13 @@ end,nil)
 elseif text and text:match("^تنزيل منشئ اساسي @(.*)$") then 
 tdcli_function ({ID = "GetChatMember",chat_id_ = msg.chat_id_,user_id_ = msg.sender_user_id_},function(arg,da) 
 if da.status_.ID == "ChatMemberStatusCreator" then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3631,8 +3860,13 @@ return false
 end
 end,nil)
 elseif text and text:match("^رفع منشئ @(.*)$") and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3649,8 +3883,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^رفع منشئ @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل منشئ @(.*)$") and BasicBuilder(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3663,8 +3902,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^تنزيل منشئ @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^رفع مدير @(.*)$") and Constructor(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3681,8 +3925,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^رفع مدير @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل مدير @(.*)$") and Constructor(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3695,8 +3944,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^تنزيل مدير @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^رفع ادمن @(.*)$") and Owner(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Cheking:Seted"..msg.chat_id_) then 
@@ -3717,8 +3971,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^رفع ادمن @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل ادمن @(.*)$") and Owner(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3731,8 +3990,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^تنزيل ادمن @(.*)$") }, FunctionStatus, nil)
 elseif text and text:match("^رفع مميز @(.*)$") and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Cheking:Seted"..msg.chat_id_) then 
@@ -3753,8 +4017,13 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = text:match("^رفع مميز @(.*)$")}, FunctionStatus, nil)
 elseif text and text:match("^تنزيل مميز @(.*)$") and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 function FunctionStatus(arg, result)
@@ -3857,8 +4126,13 @@ end
 tdcli_function ({ID = "SearchPublicChat",username_ = text1[3]},status_username,nil) 
 end  
 elseif text and text:match("^حظر @(.*)$") and Admin(msg) then
-if AddChannel(msg.sender_user_id_) == false then
-send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
 return false
 end
 if not Constructor(msg) and redis:get(bot_id.."Status:Lock:Ban:Group"..msg.chat_id_) then 
@@ -5381,7 +5655,8 @@ local taha = "⌔︙ عدد الادمنيه : "..data.administrator_count_..
 "\n⌔︙ اسم المجموعه : ["..ta.title_.."]"
 send(msg.chat_id_, msg.id_, taha) 
 end,nil)end,nil)
-elseif text == "غادر" then 
+elseif text == "غادر" then
+
 if DeveloperBot(msg) and not redis:get(bot_id.."Status:Lock:Left"..msg.chat_id_) then 
 tdcli_function ({ID = "ChangeChatMemberStatus",chat_id_=msg.chat_id_,user_id_=bot_id,status_={ID = "ChatMemberStatusLeft"},},function(e,g) end, nil) 
 send(msg.chat_id_, msg.id_,"⌔︙تم حبيبي حغادر") 
@@ -5444,7 +5719,16 @@ return false end
 redis:setex(bot_id.."Broadcasting:Groups:Fwd" .. msg.chat_id_ .. ":" .. msg.sender_user_id_, 600, true) 
 send(msg.chat_id_, msg.id_,"⌔︙ارسل لي التوجيه الان\n⌔︙ليتم نشره في المجموعات") 
 return false
-elseif text=="اذاعه بالتوجيه خاص" and msg.reply_to_message_id_ == 0  and DeveloperBot(msg) then 
+elseif text=="اذاعه بالتوجيه خاص" and msg.reply_to_message_id_ == 0  and DeveloperBot(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Broadcasting:Bot") and not Dev_rakon(msg) then 
 send(msg.chat_id_, msg.id_,"⌔︙تم تعطيل الاذاعه من قبل المطور الاساسي !")
 return false end
@@ -5452,7 +5736,16 @@ redis:setex(bot_id.."Broadcasting:Users:Fwd" .. msg.chat_id_ .. ":" .. msg.sende
 send(msg.chat_id_, msg.id_,"⌔︙ارسل لي التوجيه الان\n⌔︙ليتم نشره الى المشتركين") 
 return false
 
-elseif text == "الاعدادات" and Admin(msg) then    
+elseif text == "الاعدادات" and Admin(msg) then   
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:lockpin"..msg.chat_id_) then    
 lock_pin = "{✔️}"
 else 
@@ -5853,6 +6146,15 @@ redis:set(bot_id.."Set:Id:Group"..msg.chat_id_,Text_Rand)
 send(msg.chat_id_, msg.id_,'⌔︙ تم تغير الايدي ارسل ايدي لرؤيته')
 end
 if text == 'كشف' and tonumber(msg.reply_to_message_id_) > 0 and not redis:get(bot_id..'Status:Lock:Id:Photo'..msg.chat_id_) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 function Function_Status(extra, result, success)
 tdcli_function ({ID = "GetUser",user_id_ = result.sender_user_id_},function(arg,data) 
 if data.first_name_ == false then
@@ -5874,6 +6176,15 @@ tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumbe
 return false
 elseif text and text:match("^كشف @(.*)$") and not redis:get(bot_id..'Status:Lock:Id:Photo'..msg.chat_id_) then
 local username = text:match("^كشف @(.*)$")
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 function Function_Status(extra, result, success)
 if result.id_ then
 tdcli_function ({ID = "GetUser",user_id_ = result.id_},function(arg,data) 
@@ -5895,6 +6206,15 @@ tdcli_function ({ID = "SearchPublicChat",username_ = username}, Function_Status,
 return false
 end
 if text == 'ايدي' and tonumber(msg.reply_to_message_id_) == 0 and not redis:get(bot_id..'Status:Lock:Id:Photo'..msg.chat_id_) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 tdcli_function ({ID = "GetUserProfilePhotos",user_id_ = msg.sender_user_id_,offset_ = 0,limit_ = 1},function(extra,taha,success) 
 tdcli_function ({ID = "GetUser",user_id_ = msg.sender_user_id_},function(arg,data) 
 if data.username_ then
@@ -6326,18 +6646,21 @@ elseif text == 'السورس' or text == 'سورس' or text == 'ياسورس'  t
 send(msg.chat_id_, msg.id_,[[
 ⦑ Welcome to Source ⦒
 
-𓂅 .rakon TEAM 
+𓂅 .𝑺𝑶𝑼𝑹𝑪𝑬𐇵𝑹𝑨𝑲𝑶𝑵
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
-𓂅 . [Source Channel](t.me/JJJUU)
+𓂅 . [𝑺𝑶𝑼𝑹𝑪𝑬𐇵𝑹𝑨𝑲𝑶𝑵](t.me/RAKON0)
 
-𓂅 . [Source Info ](t.me/rakon0)     
+𓂅 . [𝑼𝒑𝒅𝒂𝒕𝒆 𝒔𝒐𝒓𝒖𝒄𝒆 ](t.me/rakon0)     
 
-𓂅 . [rakon iNDT](t.me/rakon0)     
+𓂅 . [𝑻𝒂𝒘𝒔𝒍 𝒅𝒆𝒗](t.me/RIKON0BOT)     
  
  ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ 
-𓂅 . [TWS rakon](t.me/ubuuuBoT)     
 ]]) 
 elseif text == 'الاوامر' and Admin(msg) then
+if AddChannel(msg.sender_user_id_) == false then
+send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙توجد ← 5 اوامر في البوت
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -6350,6 +6673,10 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'م1' and Admin(msg) then
+if AddChannel(msg.sender_user_id_) == false then
+send(msg.chat_id_,msg.id_,'\n⌔︙بليز اشترك بالقناة البوت واستخدم البوت. \n⌔︙قناة البوت 📁.\n- @RAKON0')   
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙اوامر الحمايه اتبع مايلي ...
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -6704,6 +7031,15 @@ end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = username}, Function_Status, nil)
 elseif text == "رفع القيود" and Owner(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 function Function_Status(extra, result, success)
 if Dev_rakon(msg) then
 redis:srem(bot_id.."Removal:User:Groups",result.sender_user_id_)
@@ -6720,7 +7056,16 @@ end
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, Function_Status, nil)
 elseif text and text:match("^كشف القيود @(.*)") and Owner(msg) then 
-local username = text:match("^كشف القيود @(.*)") 
+local username = text:match("^كشف القيود @(.*)")
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 function Function_Status(extra, result, success)
 if result.id_ then
 if redis:sismember(bot_id.."Silence:User:Group"..msg.chat_id_,result.id_) then
@@ -6749,7 +7094,16 @@ send(msg.chat_id_, msg.id_,"⌔︙ المعرف غلط")
 end
 end
 tdcli_function ({ID = "SearchPublicChat",username_ = username}, Function_Status, nil)
-elseif text == "كشف القيود" and Owner(msg) then 
+elseif text == "كشف القيود" and Owner(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 function Function_Status(extra, result, success)
 if redis:sismember(bot_id.."Silence:User:Group"..msg.chat_id_,result.sender_user_id_) then
 Muted = "مكتوم"
@@ -6775,6 +7129,15 @@ send(msg.chat_id_, msg.id_,"⌔︙ الحظر العام ← "..GBan.."\n⌔︙ 
 end
 tdcli_function ({ID = "GetMessage",chat_id_ = msg.chat_id_,message_id_ = tonumber(msg.reply_to_message_id_)}, Function_Status, nil)
 elseif text ==("رفع الادمنيه") and Owner(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 tdcli_function ({ID = "GetChannelMembers",channel_id_ = msg.chat_id_:gsub("-100",""),filter_ = {ID = "ChannelMembersAdministrators"},offset_ = 0,limit_ = 100},function(arg,data) 
 local num2 = 0
 local admins = data.members_
@@ -6800,6 +7163,15 @@ send(msg.chat_id_, msg.id_,"⌔︙ تمت ترقية - "..num2.." من ادمن�
 end
 end,nil)   
 elseif text ==("المنشئ") then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 tdcli_function ({ID = "GetChannelMembers",channel_id_ = msg.chat_id_:gsub("-100",""),filter_ = {ID = "ChannelMembersAdministrators"},offset_ = 0,limit_ = 100},function(arg,data) 
 local admins = data.members_
 for i=0 , #admins do
