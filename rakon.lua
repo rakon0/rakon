@@ -1551,27 +1551,27 @@ redis:del(bot_id.."Broadcasting:Users" .. msg.chat_id_ .. ":" .. msg.sender_user
 return false
 end
 ------------------------------------------------------------------------------------------------------------
-if text and text:match("^- تغير الاشتراك 🎚$") and Dev_rakon(msg) then  
+if text and text:match("^- تغير الاشتراك 🧾 .") and Dev_rakon(msg) then  
 redis:setex(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
 send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي معرف القناة')
 return false  
 end
-if text and text:match("- تغير رساله الاشتراك ⚙$") and Dev_rakon(msg) then  
+if text and text:match("تغير رساله الاشتراك ⚙") and Dev_rakon(msg) then  
 redis:setex(bot_id.."textch:user" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
 send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي النص الذي تريده')
 return false  
 end
-if text == "حذف رساله الاشتراك 🗑" and Dev_rakon(msg) then  
+if text == "حذف رساله الاشتراك ℹ ." and Dev_rakon(msg) then  
 redis:del(bot_id..'text:ch:user')
 send(msg.chat_id_, msg.id_, "⌔︙تم مسح رساله الاشتراك ")
 return false  
 end
-if text and text:match("^- تعين قناة الاشتراك 📜$") and Dev_rakon(msg) then  
+if text and text:match("^- تعين قناة الاشتراك 📁 .$") and Dev_rakon(msg) then  
 redis:setex(bot_id.."add:ch:jm" .. msg.chat_id_ .. "" .. msg.sender_user_id_, 360, true)  
 send(msg.chat_id_, msg.id_, '⌔︙حسنآ ارسل لي معرف القناة')
 return false  
 end
-if text == "تفعيل الاشتراك الاجباري ✅" and Dev_rakon(msg) then  
+if text == "- تفعيل الاشتراك الاجباري 📄 ." and Dev_rakon(msg) then  
 if redis:get(bot_id..'add:ch:id') then
 local addchusername = redis:get(bot_id..'add:ch:username')
 send(msg.chat_id_, msg.id_,"⌔︙الاشتراك الاجباري مفعل \n⌔︙على القناة » ["..addchusername.."]")
@@ -1581,13 +1581,13 @@ send(msg.chat_id_, msg.id_,"⌔︙اهلا عزيزي المطور \n⌔︙ار�
 end
 return false  
 end
-if text == "تعطيل الاشتراك الاجباري ❌" and Dev_rakon(msg) then  
+if text == "- تعطيل الاشتراك الاجباري 📄 ." and Dev_rakon(msg) then  
 redis:del(bot_id..'add:ch:id')
 redis:del(bot_id..'add:ch:username')
 send(msg.chat_id_, msg.id_, "⌔︙تم تعطيل الاشتراك الاجباري ")
 return false  
 end
-if text == "الاشتراك الاجباري ⭕️" and Dev_rakon(msg) then  
+if text == "- الاشتراك الاجباري 📮 ." and Dev_rakon(msg) then  
 if redis:get(bot_id..'add:ch:username') then
 local addchusername = redis:get(bot_id..'add:ch:username')
 send(msg.chat_id_, msg.id_, "⌔︙تم تفعيل الاشتراك الاجباري \n⌔︙على القناة » ["..addchusername.."]")
@@ -2413,10 +2413,11 @@ local List_keyboard = {
 {'مسح قائمه العام 💯','مسح قائمه المطورين 🚫'},
 {'ازالة كليشه ستارت 🔗','تغير كليشه ستارت 🆕'},
 {'قائمه العام 📝','قائمه المطورين 📝'},
-{'الاشتراك الاجباري ⭕️','- تغير الاشتراك 🎚'},
-{'تفعيل الاشتراك الاجباري ✅','تعطيل الاشتراك الاجباري ❌'},
-{'- تعين قناة الاشتراك 📜'},
-{'حذف رساله الاشتراك 🗑','- تغير رساله الاشتراك ⚙'},
+{'- تعطيل الاشتراك الاجباري 📄 .'},
+{'- تغير الاشتراك 🧾 .', 'حذف رساله الاشتراك ℹ .'},
+{'- تفعيل الاشتراك الاجباري 📄 .'},
+{'- الاشتراك الاجباري 📮 .'},
+{'- تعين قناة الاشتراك 📁 .','تغير رساله الاشتراك ⚙'},                                      
 {'تغير اسم البوت 🔄'},
 {'تغير كليشة المطور 🆕','ازالة كليشة المطور 🆗'},
 {'تحديث الملفات 🔁','تحديث السورس 🔂'},
@@ -3039,13 +3040,31 @@ File:close()
 sendDocument(msg.chat_id_, msg.id_,'./lib/'..bot_id..'.json', '📮┇ عدد مجموعات التي في البوت { '..#list..'}')
 end
 if text == 'تنزيل جميع الرتب' and BasicBuilder(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 redis:del(bot_id..'Constructor:Group'..msg.chat_id_)
 redis:del(bot_id..'Manager:Group'..msg.chat_id_)
 redis:del(bot_id..'Admin:Group'..msg.chat_id_)
 redis:del(bot_id..'Vip:Group'..msg.chat_id_)
 send(msg.chat_id_, msg.id_,'⌔︙تم تنزيل الكل من جميع الرتب\n{المنشئين ، المدراء ، الادمنيه ، المميزين}')  
 end
-if text == 'السيرفر' and DeveloperBot(msg) then 
+if text == 'السيرفر' and DeveloperBot(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_, io.popen([[
 linux_version=`lsb_release -ds`
 memUsedPrc=`free -m | awk 'NR==2{printf "%sMB/%sMB {%.2f%}\n", $3,$2,$3*100/$2 }'`
@@ -5428,6 +5447,15 @@ end
 send(msg.chat_id_, msg.id_,"⌔︙ تم الغاء الحظر عن *: "..num.." * شخص") 
 end    
 elseif text == "مسح البوتات" and Admin(msg) then 
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 tdcli_function ({ ID = "GetChannelMembers",channel_id_ = msg.chat_id_:gsub("-100",""),filter_ = {ID = "ChannelMembersBots"},offset_ = 0,limit_ = 100 },function(arg,tah)  
 local admins = tah.members_  
 local x = 0
@@ -5612,7 +5640,16 @@ end
 end,nil)
 end
 end,nil)
-elseif text == "القوانين" then 
+elseif text == "القوانين" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 local Set_Rules = redis:get(bot_id..":Rules:Group" .. msg.chat_id_)   
 if Set_Rules then     
 send(msg.chat_id_,msg.id_, Set_Rules)   
@@ -5731,6 +5768,15 @@ text = "⌔︙لاتوجد ردود للمدير"
 end
 send(msg.chat_id_, msg.id_,"["..text.."]")
 elseif text == "اضف رد" and Owner(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,"⌔︙ارسل الان الكلمه لاضافتها في ردود المدير ")
 redis:set(bot_id.."Set:Manager:rd"..msg.sender_user_id_..":"..msg.chat_id_,true)
 elseif text == "حذف رد" and Owner(msg) then
@@ -6671,6 +6717,15 @@ end
 tdcli_function ({ID = "SearchPublicChat",username_ = username}, Function_Status, nil)
 return false
 elseif text == "سمايلات" or text == "سمايل" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 redis:del(bot_id.."Status:Set:Sma"..msg.chat_id_)
 Random = {"🍏","🍎","🍐","🍊","🍋","🍉","🍇","🍓","🍈","🍒","🍑","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥒","🌶","🌽","🥕","🥔","🥖","🥐","🍞","🥨","🍟","🧀","🥚","🍳","🥓","🥩","🍗","🍖","🌭","🍔","🍠","🍕","🥪","🥙","☕️","??","🥤","🍶","🍺","🍻","🏀","⚽️","🏈","⚾️","🎾","🏐","🏉","🎱","🏓","🏸","🥅","🎰","🎮","🎳","🎯","🎲","🎻","🎸","🎺","🥁","🎹","🎼","🎧","🎤","🎬","🎨","🎭","🎪","🎟","🎫","🎗","🏵","🎖","🏆","🥌","🛷","🚗","🚌","🏎","🚓","🚑","🚚","🚛","🚜","🇮🇶","⚔","🛡","🔮","🌡","💣","📌","📍","📓","📗","📂","📅","📪","📫","📬","📭","⏰","📺","🎚","☎️","📡"}
@@ -6680,6 +6735,15 @@ send(msg.chat_id_, msg.id_,"⌔︙اسرع واحد يدز هاذا السماي
 return false
 end
 elseif text == "الاسرع" or tect == "ترتيب" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 redis:del(bot_id.."Status:Speed:Tr"..msg.chat_id_)
 KlamSpeed = {"سحور","سياره","استقبال","قنفه","ايفون","بزونه","مطبخ","كرستيانو","دجاجه","مدرسه","الوان","غرفه","ثلاجه","كهوه","سفينه","العراق","محطه","طياره","رادار","منزل","مستشفى","كهرباء","تفاحه","اخطبوط","سلمون","فرنسا","برتقاله","تفاح","مطرقه","بتيته","لهانه","شباك","باص","سمكه","ذباب","تلفاز","حاسوب","انترنيت","ساحه","جسر"};
@@ -6729,6 +6793,15 @@ send(msg.chat_id_, msg.id_,"⌔︙اسرع واحد يرتبها ~ {"..name.."}"
 return false
 end
 elseif text == "حزوره" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 redis:del(bot_id.."Status:Set:Hzora"..msg.chat_id_)
 Hzora = {"الجرس","عقرب الساعه","السمك","المطر","5","الكتاب","البسمار","7","الكعبه","بيت الشعر","لهانه","انا","امي","الابره","الساعه","22","غلط","كم الساعه","البيتنجان","البيض","المرايه","الضوء","الهواء","الضل","العمر","القلم","المشط","الحفره","البحر","الثلج","الاسفنج","الصوت","بلم"};
@@ -6771,6 +6844,15 @@ send(msg.chat_id_, msg.id_,"⌔︙اسرع واحد يحل الحزوره ↓\n 
 return false
 end
 elseif text == "معاني" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 redis:del(bot_id.."Status:Set:Maany"..msg.chat_id_)
 Maany_Rand = {"قرد","دجاجه","بطريق","ضفدع","بومه","نحله","ديك","جمل","بقره","دولفين","تمساح","قرش","نمر","اخطبوط","سمكه","خفاش","اسد","فأر","ذئب","فراشه","عقرب","زرافه","قنفذ","تفاحه","باذنجان"}
@@ -6805,6 +6887,15 @@ send(msg.chat_id_, msg.id_,"⌔︙اسرع واحد يدز معنى السماي
 return false
 end
 elseif text == "العكس" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 redis:del(bot_id.."Status:Set:Aks"..msg.chat_id_)
 katu = {"باي","فهمت","موزين","اسمعك","احبك","موحلو","نضيف","حاره","ناصي","جوه","سريع","ونسه","طويل","سمين","ضعيف","شريف","شجاع","رحت","عدل","نشيط","شبعان","موعطشان","خوش ولد","اني","هادئ"}
@@ -6847,6 +6938,15 @@ redis:setex(bot_id.."Status:GAME:TKMEN" .. msg.chat_id_ .. "" .. msg.sender_user
 return false  
 end
 elseif text == "محيبس" or text == "بات" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then   
 Num = math.random(1,6)
 redis:set(bot_id.."Status:Games:Bat"..msg.chat_id_,Num) 
@@ -6861,6 +6961,15 @@ redis:setex(bot_id.."Status:SET:GAME" .. msg.chat_id_ .. "" .. msg.sender_user_i
 return false  
 end
 elseif text == "المختلف" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 mktlf = {"😸","☠","🐼","🐇","🌑","🌚","⭐️","✨","⛈","🌥","⛄️","👨‍🔬","👨‍💻","👨‍🔧","🧚‍♀","🧜‍♂","??‍♂","🙍‍♂","🧖‍♂","👬","🕒","🕤","⌛️","📅",};
 name = mktlf[math.random(#mktlf)]
@@ -6896,6 +7005,15 @@ send(msg.chat_id_, msg.id_,"⌔︙اسرع واحد يدز الاختلاف ~ {"
 return false
 end
 elseif text == "امثله" then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 if redis:get(bot_id.."Status:Lock:Game:Group"..msg.chat_id_) then
 mthal = {"جوز","ضراطه","الحبل","الحافي","شقره","بيدك","سلايه","النخله","الخيل","حداد","المبلل","يركص","قرد","العنب","العمه","الخبز","بالحصاد","شهر","شكه","يكحله",};
 name = mthal[math.random(#mthal)]
@@ -7005,6 +7123,15 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'م2' and Admin(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙اوامر ادمنية المجموعه ...
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -7044,6 +7171,15 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'م3' and Owner(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙اوامر المدراء في المجموعه
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -7075,6 +7211,15 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'م4' and Constructor(msg) then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙اوامر المنشئ الاساسي
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -7093,6 +7238,15 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'م5' and DeveloperBot(msg)  then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙اوامر المطور الاساسي  
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
@@ -7126,6 +7280,15 @@ send(msg.chat_id_, msg.id_,[[*
 ⌔︙قناة البوت ←* @RAKON0
 ]]) 
 elseif text == 'الالعاب' then
+if AddChannelDEV(msg.sender_user_id_) == false then
+local textchuser = redis:get(bot_id..'text:ch:user')
+if textchuser then
+send(msg.chat_id_, msg.id_,'['..textchuser..']')
+else
+send(msg.chat_id_, msg.id_,'⌔︙عـليك الاشـتࢪاك في قنـاة البـوت اولآ . \n ⌔︙قنـاة البـوت ←  ['..redis:get(bot_id..'add:ch:username')..']')
+end
+return false
+end
 send(msg.chat_id_, msg.id_,[[*
 ⌔︙قائمه الالعاب البوت
 ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉ ┉
